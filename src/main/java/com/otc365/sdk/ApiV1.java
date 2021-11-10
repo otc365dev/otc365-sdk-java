@@ -20,11 +20,11 @@ public class ApiV1 {
         if (params.get("signType") != null && params.get("signType").equals(1)) {
             String sign = Utils.HMACSHA256(baseString,secretKey);
             origParams.put("sign",sign);
-            return Utils.httpCall(url,origParams);
+            return Utils.httpPost(url,origParams);
         }else{
             String sign = Utils.md5(baseString);
             origParams.put("sign",sign);
-            return Utils.httpCall(url,origParams);
+            return Utils.httpPost(url,origParams);
         }
     }
 }

@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import sun.misc.BASE64Decoder;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -16,11 +19,16 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
 public class Utils {
 
-    static ObjectMapper mapper = new ObjectMapper();
+    public static ObjectMapper mapper = new ObjectMapper();
+
+    private final static int CONNECT_TIMEOUT = 6000;
+    private final static int SOCKET_TIMEOUT = 30000;
+    private final static int REQUEST_TIMEOUT = 30000;
 
 
     public static String HMACSHA256(String data, String key) throws Exception {
@@ -70,6 +78,13 @@ public class Utils {
 
     }
 
+    public static PublicKey getPublicKey(String key) throws Exception {
+        byte[] keyBytes = (new BASE64Decoder()).decodeBuffer(key);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PublicKey publicKey = keyFactory.generatePublic(keySpec);
+        return publicKey;
+    }
 
     public static String signRSA(String data, String priKeyStr) throws Exception {
 
@@ -83,7 +98,21 @@ public class Utils {
         return Base64.encodeBase64String(signature.sign());
     }
 
-    public static String httpCall(String url,Map<String, Object> params) throws Exception{
+    public static boolean verifyRSA(String requestData, String signature, String key) throws Exception {
+        boolean verifySignSuccess = false;
+
+        byte[] keyBytes = Base64.decodeBase64(key);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PublicKey publicKey = keyFactory.generatePublic(keySpec);
+        Signature verifySign = Signature.getInstance("SHA256withRSA");
+        verifySign.initVerify(publicKey);
+        verifySign.update(requestData.getBytes());
+        verifySignSuccess = verifySign.verify(Base64.decodeBase64(signature));
+        return verifySignSuccess;
+    }
+
+    public static String httpPost(String url,Map<String, Object> params) throws Exception{
 
         CloseableHttpClient client = HttpClients.createDefault();
 
@@ -91,6 +120,24 @@ public class Utils {
         request.setHeader("Content-Type","application/json");
         StringEntity entity = new StringEntity(mapper.writeValueAsString(params), "UTF-8");
         request.setEntity(entity);
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(CONNECT_TIMEOUT).setConnectionRequestTimeout(REQUEST_TIMEOUT).setSocketTimeout(SOCKET_TIMEOUT).build();
+
+
+        HttpResponse response = client.execute(request);
+
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            return EntityUtils.toString(response.getEntity());
+        }else{
+            throw new Exception("http call failure,code="+response.getStatusLine().getStatusCode());
+        }
+    }
+
+    public static String httpGet(String url) throws Exception{
+
+        CloseableHttpClient client = HttpClients.createDefault();
+
+        HttpGet request = new HttpGet(url);
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(CONNECT_TIMEOUT).setConnectionRequestTimeout(REQUEST_TIMEOUT).setSocketTimeout(SOCKET_TIMEOUT).build();
 
         HttpResponse response = client.execute(request);
 

@@ -17,7 +17,7 @@ public class ApiV2 {
         String baseString = Utils.createBaseString(params);
         String sign = Utils.signRSA(baseString,privateKey);
         origParams.put("sign",sign);
-        return Utils.httpCall(url,origParams);
+        return Utils.httpPost(url,origParams);
 
     }
 }
