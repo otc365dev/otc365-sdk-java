@@ -69,19 +69,4 @@ public class TestApi {
 
         System.out.println(resp);
     }
-
-
-    @Test
-    public void TestV2RSAVerifySign() throws Exception{
-
-        Map<String,Object> params = new HashMap<>();
-        params.put("id","4552054090557441");
-        params.put("remark","test");
-        params.put("platform","otc");
-
-        boolean flag = Utils.verifyRSA("businessId=4552054090557441&address=TEty9RRjjkuXi1SPz2EbkjdBExvbL6yFet&amount=100&currency=TRC20&flag=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-                "DkvVtznkegme8FEX4urISkfNZ8Tx89KKebI74Ieu+nU9fICPYU6PxZzic91gT0cwxiJwu0xvVyRhkl+gLIg33v1XHq4065T+l667lNxoIuE3RCxkyWnFRRkZg6OC/+Lm5Fl1m9c52DEzSKFBaiX49F9j+Gv5vqlhTPlbRsbY3Zo=",
-                "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCm72wGGVcRfEekLKl3812DLmizdRtpBEY8zL9BDLsnrvFOoSbUGsmozRMC1U1jrhkgAsw4CbJgphaUXdk9TS6GBlGCG75WNec0iQJdLaC+D6gqNmgBOjIckQ2n9wAXQyYcSTiBUgP92dELCMNMpgYDMmbwwblh0kMoHCYL3GZZ7QIDAQAB");
-        System.out.println(flag);
-    }
 }
